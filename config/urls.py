@@ -6,9 +6,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # API v1
-    path("api/v1/auth/", include("apps.accounts.urls")),
-    path("api/v1/leads/", include("apps.leads.urls")),
-    path("api/v1/workflows/", include("apps.workflows.urls")),
-    path("api/v1/tasks/", include("apps.tasks.urls")),
-    path("api/v1/notifications/", include("apps.notifications.urls")),
+    path("api/auth/", include("apps.accounts.urls")),
+    path("api/leads/", include("apps.leads.urls")),
+    path("api/workflows/", include("apps.workflows.urls")),
+    path("api/tasks/", include("apps.tasks.urls")),
+    path("api/notifications/", include("apps.notifications.urls")),
 ]
