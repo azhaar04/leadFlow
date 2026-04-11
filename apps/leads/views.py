@@ -14,7 +14,7 @@ from .serializers import (
     LeadNoteSerializer,
     LeadNoteCreateSerializer,
 )
-
+from apps.automation.services import emit_event
 
 class LeadListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -41,6 +41,14 @@ class LeadListCreateView(generics.ListCreateAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().create(request, *args, **kwargs)
+    def perform_create(self, serializer):
+        lead = serializer.save()
+
+        # trigger automation here
+        emit_event(
+            trigger_type="new_lead_created",
+            lead=lead,
+        )
 
 
 class LeadRetrieveUpdateView(generics.RetrieveUpdateAPIView):
