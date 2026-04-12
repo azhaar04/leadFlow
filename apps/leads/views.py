@@ -114,8 +114,23 @@ class LeadStatusUpdateView(APIView):
         serializer = LeadStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        lead.status = serializer.validated_data["status"]
+        old_status = lead.status
+        new_status = serializer.validated_data["status"]
+
+        lead.status = new_status
         lead.save(update_fields=["status", "updated_at"])
+
+        # trigger automation only if status actually changed
+        if old_status != new_status:
+            emit_event(
+                trigger_type="lead_status_changed",
+                lead=lead,
+                context={
+                    "old_status": old_status,
+                    "new_status": new_status,
+                    "status": new_status,
+                },
+            )
 
         return Response(LeadDetailSerializer(lead).data, status=status.HTTP_200_OK)
 
