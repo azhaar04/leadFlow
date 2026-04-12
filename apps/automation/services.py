@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.tasks.models import Task
-# from apps.notifications.models import Notification
+from apps.notifications.models import Notification
 from apps.workflows.models import (
     Workflow,
     WorkflowStatus,
