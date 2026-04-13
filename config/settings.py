@@ -166,6 +166,20 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-
+# =========================
+# EMAIL CONFIG
+# =========================
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# =========================
+# CELERY CONFIG
+# =========================
+CELERY_BROKER_URL = config("REDIS_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
