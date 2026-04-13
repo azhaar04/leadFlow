@@ -14,7 +14,8 @@ from .serializers import (
     LeadNoteSerializer,
     LeadNoteCreateSerializer,
 )
-from apps.automation.services import emit_event
+from apps.automation.tasks import run_workflow_event
+from django.db import transaction
 
 class LeadListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -44,10 +45,8 @@ class LeadListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         lead = serializer.save()
 
-        # trigger automation here
-        emit_event(
-            trigger_type="new_lead_created",
-            lead=lead,
+        transaction.on_commit(
+            lambda: run_workflow_event.delay("new_lead_created", lead.id, {})
         )
 
 
@@ -122,14 +121,16 @@ class LeadStatusUpdateView(APIView):
 
         # trigger automation only if status actually changed
         if old_status != new_status:
-            emit_event(
-                trigger_type="lead_status_changed",
-                lead=lead,
-                context={
-                    "old_status": old_status,
-                    "new_status": new_status,
-                    "status": new_status,
-                },
+           transaction.on_commit(
+                lambda: run_workflow_event.delay(
+                    "lead_status_changed",
+                    lead.id,
+                    {
+                        "old_status": old_status,
+                        "new_status": new_status,
+                        "status": new_status,
+                    },
+                )
             )
 
         return Response(LeadDetailSerializer(lead).data, status=status.HTTP_200_OK)
