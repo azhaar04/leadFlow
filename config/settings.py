@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.tasks",
     "apps.notifications",
     "apps.automation",
+    "apps.dashboard",
 ]
 
 # =========================
