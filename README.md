@@ -2,7 +2,7 @@
 
 LeadFlow is a backend system for managing leads, tasks, and workflow automation.
 
-It enables admins to define automation rules that trigger actions like assigning agents, creating tasks, and sending notifications — all executed asynchronously using Celery.
+It allows admins to define automation rules that trigger actions like assigning agents, creating tasks, sending notifications, and emails — all executed asynchronously using Celery.
 
 ---
 
@@ -14,7 +14,7 @@ Instead of hardcoding logic, admins can define workflows like:
 
 > “When a new lead is created → assign agent → create task → send notification”
 
-The system listens to events, evaluates conditions, and executes actions dynamically in the background.
+The system listens to events, evaluates conditions, and executes actions dynamically.
 
 ---
 
@@ -22,260 +22,236 @@ The system listens to events, evaluates conditions, and executes actions dynamic
 
 ### 🔐 Authentication
 
-* Custom user model
-* JWT authentication
-* Role-based access (admin, agent)
-
----
+- Custom user model
+- JWT authentication (SimpleJWT)
+- Role-based access (`admin`, `agent`)
 
 ### 👤 Lead Management
 
-* Create, list, update leads
-* Assign leads to agents
-* Role-based filtering
-
----
+- Create, list, update leads
+- Assign leads to agents
+- Role-based filtering
 
 ### 📋 Task Management
 
-* Create and manage tasks
-* Assign tasks to agents
-* Track status and due dates
-* Overdue detection
-
----
+- Create and manage tasks
+- Assign tasks to agents
+- Track status and due dates
 
 ### ⚙️ Workflow Automation
 
-* Define workflows with:
+- Admin-defined workflows with:
+    - trigger types
+    - conditions
+    - actions
 
-  * Trigger types
-  * Conditions
-  * Actions
+#### Supported Triggers (MVP)
 
-#### Supported triggers
+- `new_lead_created`
+- `lead_status_changed`
 
-* `new_lead_created`
-* `lead_status_changed`
+#### Supported Actions (MVP)
 
-#### Supported actions
-
-* assign agent
-* create task
-* send notification
-* send email
-
----
-
-### 🤖 Automation Engine (Async)
-
-* Event-driven system
-* Condition evaluation
-* Ordered action execution
-* Workflow run tracking
-* Action logging
-* Executed asynchronously using Celery
+- assign agent
+- create task
+- send notification
+- send email
 
 ---
 
-### 🔔 Notifications
+## 🤖 Automation Engine
 
-* In-app notifications
-* Mark as read
-* Unread count API
-
----
-
-### 📊 Dashboard APIs
-
-#### Admin Dashboard
-
-* Total leads
-* Leads by status
-* Total active workflows
-* Pending tasks
-* Overdue tasks
-* Recent workflow runs
-
-#### Agent Dashboard
-
-* Assigned leads count
-* Pending tasks
-* Overdue tasks
-* Recent lead updates
+- Event-driven architecture
+- Condition evaluation engine
+- Ordered action execution
+- WorkflowRun tracking
+- Action logging
 
 ---
 
-### 📊 Monitoring & Logs
+## ⚡ Async Processing (Celery + Redis)
 
-* Workflow run tracking
-* Action logs for each execution
-* Debug-friendly logging for async jobs
+Automation execution runs asynchronously using:
+
+- **Celery** → task queue system
+- **Redis** → message broker
+
+### Flow
+
+1. Lead event is triggered (e.g., created or status changed)
+2. Django emits event
+3. Celery picks up task via Redis
+4. Workflow engine processes:
+    - condition evaluation
+    - action execution
+
+5. Logs stored in database
+
+---
+
+## 🔔 Notifications
+
+- In-app notifications
+- Mark as read
+- Unread count API
+
+---
+
+## 📊 Dashboard APIs
+
+### Admin Dashboard
+
+- total leads
+- leads by status
+- active workflows
+- pending & overdue tasks
+- recent workflow runs
+
+### Agent Dashboard
+
+- assigned leads
+- pending tasks
+- overdue tasks
+- recent activity
 
 ---
 
 ## 🏗️ Tech Stack
 
-* Python 3.x
-* Django
-* Django REST Framework
-* PostgreSQL
-* JWT (SimpleJWT)
-* Redis (message broker)
-* Celery (background task processing)
+- Python 3.x
+- Django
+- Django REST Framework
+- PostgreSQL
+- JWT (SimpleJWT)
+- Redis
+- Celery
+- Docker & Docker Compose
 
 ---
 
-## ⚙️ Setup Instructions
+## 📁 Project Structure
+
+```
+config/
+apps/
+    accounts/
+    leads/
+    tasks/
+    workflows/
+    automation/
+    notifications/
+```
+
+---
+
+## 🐳 Docker Setup
 
 ### 1. Clone repository
 
-```bash
+```
 git clone <your-repo-url>
 cd leadflow
 ```
 
 ---
 
-### 2. Create virtual environment
+### 2. Create `.env`
 
-```bash
-python -m venv venv
-venv\Scripts\activate       # Windows
-source venv/bin/activate    # Mac/Linux
 ```
-
----
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-### 4. Create `.env` file
-
-```env
 SECRET_KEY=your_secret_key
 DEBUG=True
 
 DB_NAME=leadflow
 DB_USER=postgres
 DB_PASSWORD=yourpassword
-DB_HOST=localhost
+DB_HOST=db
 DB_PORT=5432
 
-REDIS_URL=redis://127.0.0.1:6379/0
-CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1
+POSTGRES_DB=leadflow
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=yourpassword
+
+REDIS_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
 ```
 
 ---
 
-### 5. Apply migrations
+### 3. Build & run containers
 
-```bash
-python manage.py makemigrations
-python manage.py migrate
+```
+docker compose up --build
 ```
 
 ---
 
-### 6. Create superuser
+### 4. Run migrations (if needed)
 
-```bash
-python manage.py createsuperuser
+```
+docker compose exec web python manage.py migrate
 ```
 
 ---
 
-### 7. Run Django server
+### 5. Create superuser
 
-```bash
-python manage.py runserver
+```
+docker compose exec web python manage.py createsuperuser
 ```
 
 ---
 
-### 8. Run Redis server
+### 6. Access app
 
-```bash
-docker run -d -p 6379:6379 redis
-```
-
----
-
-### 9. Run Celery worker
-
-```bash
-celery -A config worker -P solo -l info
-```
+- API → http://localhost:8000
+- Admin → http://localhost:8000/admin/
 
 ---
 
-## 🔗 API Endpoints (Core)
+## 🔗 Core API Endpoints
 
 ### Auth
 
-* POST `/api/auth/login/`
-* POST `/api/auth/signup/`
-* POST `/api/auth/refresh/`
-* GET `/api/auth/me/`
-
----
+- POST `/api/auth/login/`
+- POST `/api/auth/signup/`
+- POST `/api/auth/refresh/`
+- GET `/api/auth/me/`
 
 ### Leads
 
-* GET `/api/leads/`
-* POST `/api/leads/`
-* POST `/api/leads/{id}/change-status/`
-
----
+- GET `/api/leads/`
+- POST `/api/leads/`
+- POST `/api/leads/{id}/change-status/`
 
 ### Workflows
 
-* POST `/api/workflows/`
-* GET `/api/workflows/`
-* POST `/api/workflows/{id}/conditions/`
-* POST `/api/workflows/{id}/actions/`
-* POST `/api/workflows/{id}/activate/`
-
----
+- POST `/api/workflows/`
+- GET `/api/workflows/`
+- POST `/api/workflows/{id}/conditions/`
+- POST `/api/workflows/{id}/actions/`
+- POST `/api/workflows/{id}/activate/`
 
 ### Notifications
 
-* GET `/api/notifications/`
-* POST `/api/notifications/{id}/read/`
-* GET `/api/notifications/unread-count/`
-
----
+- GET `/api/notifications/`
+- POST `/api/notifications/{id}/read/`
+- GET `/api/notifications/unread-count/`
 
 ### Dashboard
 
-* GET `/api/dashboard/admin/`
-* GET `/api/dashboard/agent/`
+- GET `/api/dashboard/admin/`
+- GET `/api/dashboard/agent/`
 
 ---
 
-## 🔄 How Automation Works (Async Flow)
+## 🔄 How Automation Works
 
-1. Event is triggered (e.g., lead created or status changed)
-2. Django saves data
-3. Task is queued to Redis
-4. Celery worker picks up the task
-5. Matching workflows are fetched
-6. Conditions are evaluated
-7. Actions are executed in order
-8. WorkflowRun and ActionLogs are stored
-
----
-
-## 🧠 Architecture Overview
-
-```
-Django API → Redis (Broker) → Celery Worker → Automation Engine
-```
+1. Event is triggered (lead created / status changed)
+2. Celery task is queued
+3. Worker processes workflows
+4. Conditions evaluated
+5. Actions executed in order
+6. WorkflowRun + ActionLogs stored
 
 ---
 
@@ -286,20 +262,20 @@ Django API → Redis (Broker) → Celery Worker → Automation Engine
 
 **Actions:**
 
-1. Create task → “Send brochure”
+1. Create task → "Send brochure"
 2. Send notification to assigned agent
 
 ---
 
 ## 🚧 Future Improvements
 
-* Add more supported triggers (e.g., task completed, inactivity, time-based events)
-* Add more actions (e.g., webhook calls, SMS, integrations)
-* Advanced condition logic (AND/OR support)
-* Email templates
-* Dashboard analytics (charts & insights)
-* WebSocket real-time notifications
-* Scheduled workflows (delayed execution)
+- More triggers & actions (event-driven expansion)
+- Advanced condition logic (AND/OR groups)
+- Email templates
+- WebSocket real-time notifications
+- Role-based UI dashboards
+- Celery Beat (scheduled workflows)
+- Production deployment (Gunicorn + Nginx)
 
 ---
 
@@ -307,10 +283,10 @@ Django API → Redis (Broker) → Celery Worker → Automation Engine
 
 Built as a learning project to understand:
 
-* backend system design
-* event-driven architecture
-* automation engines
-* asynchronous processing with Celery
+- backend architecture
+- event-driven systems
+- async processing
+- scalable design patterns
 
 ---
 
@@ -318,11 +294,9 @@ Built as a learning project to understand:
 
 This project focuses on:
 
-* clean architecture
-* scalability
-* real-world backend patterns
-* async job processing
-
-Frontend integration will be added soon to fully visualize workflows and dashboards.
+- clean architecture
+- modular design
+- real-world backend patterns
+- scalability & extensibility
 
 ---
