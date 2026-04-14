@@ -1,0 +1,49 @@
+services:
+    web:
+        build: .
+        container_name: leadflow_web
+        command: /app/entrypoint_web.sh
+        volumes:
+            - .:/app
+        ports:
+            - "8000:8000"
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - redis
+
+    db:
+        image: postgres:16
+        container_name: leadflow_db
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        env_file:
+            - .env
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "5432:5432"
+
+    redis:
+        image: redis:7
+        container_name: leadflow_redis
+        ports:
+            - "6379:6379"
+
+    celery:
+        build: .
+        container_name: leadflow_celery
+        command: /app/entrypoint_celery.sh
+        volumes:
+            - .:/app
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - redis
+
+volumes:
+    postgres_data:
